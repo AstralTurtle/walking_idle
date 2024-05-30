@@ -1,46 +1,76 @@
+import 'dart:async';
+import 'dart:ffi';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:pedometer/pedometer.dart';
 
 
 class StepManager {
-  int steps = 0;
+  Int32List steps = 0;
   DateTime timeStamp = DateTime.now();
   int laststeps = 0;
 
   late Stream<StepCount> _stepCountStream;
   late Stream<PedestrianStatus> _pedestrianStatusStream;
-  String _status = '?', _steps = '?';
+  String _status = '?';
 
+
+  late StreamController<StepManager> controller;
+
+  late Stream<StepManager> StepManagerStream;
+
+    
+  
+
+
+
+
+  
 
   static StepManager? _instance;
+ 
   
-  StepManager._internal();
+  StepManager._internal(){
+    controller = StreamController<StepManager>();
+    init();
+    
+  }
 
   factory StepManager() {
     if (_instance == null) {
       _instance = StepManager._internal();
+       
     }
+    
     return _instance!;
   }
 
   static StepManager get instance => _instance!;
 
   int getSteps() {
+    print(steps);
     return steps;
   }
 
   void init() {
     initPlatformState();
+    print("baller");
 
 
+  }
+
+  void _notifyListeners() {
+    controller.add(this);
   }
 
  
 
   void onStepCount(StepCount event) {
-    print(event);
+    laststeps = steps;
+    steps += event.steps - laststeps;
     
-      _steps = event.steps.toString();
+      // _steps = event.steps.toString();
    
   }
 
@@ -57,7 +87,7 @@ class StepManager {
 
   void onStepCountError(error) {
     print('onStepCountError: $error');
-      _steps = 'Step Count not available';
+      // _steps = 'Step Count not available';
   }
 
   void initPlatformState() {
@@ -69,7 +99,42 @@ class StepManager {
     _stepCountStream = Pedometer.stepCountStream;
     _stepCountStream.listen(onStepCount).onError(onStepCountError);
 
+    StepManagerStream = makeStepManagerStream().asBroadcastStream();
+
     
+  }
+
+  Stream<StepManager> makeStepManagerStream(){
+    controller = StreamController<StepManager>();
+    
+    
+    return controller.stream;
+    
+  }
+
+  Stream<StepManager> getStepManagerStream(){
+      return StepManagerStream;
+  }
+
+  void resetSteps(){
+    steps = 0;
+    laststeps = 0;
+    _notifyListeners();
+  }
+
+  void addDummySteps() {
+    laststeps = steps;
+    steps += 100;
+    timeStamp = DateTime.now();
+    _notifyListeners();
+  }
+
+  void addSteps(double steps){
+    laststeps = this.steps;
+    this.steps += steps;
+    timeStamp = DateTime.now();
+    _notifyListeners();
+
   }
 
 
