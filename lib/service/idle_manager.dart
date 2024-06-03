@@ -17,6 +17,7 @@ class IdleManager extends FlameGame{
 
   @override
   void render(Canvas canvas) {
+    
     // TODO: implement render
     super.render(canvas);
   }
@@ -27,8 +28,9 @@ class IdleManager extends FlameGame{
     if (diff.inHours > maxHours) {
       diff = Duration(hours: maxHours);
     }
-
-    StepManager().addSteps(stepspersecond * diff.inSeconds);
+    // print(diff.inMicroseconds);
+    print(BankManager().balance);
+    StepManager().addSteps(stepspersecond * diff.inMicroseconds / Duration.microsecondsPerSecond);
     BankManager().applyInterest(diff);
 
     lasttime = DateTime.now();

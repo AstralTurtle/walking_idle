@@ -1,15 +1,12 @@
 import 'dart:async';
-import 'dart:ffi';
-import 'dart:io';
-import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
+
 import 'package:pedometer/pedometer.dart';
 
 
 class StepManager {
-  Int32List steps = 0;
+  double steps = 0;
   DateTime timeStamp = DateTime.now();
-  int laststeps = 0;
+  double laststeps = 0;
 
   late Stream<StepCount> _stepCountStream;
   late Stream<PedestrianStatus> _pedestrianStatusStream;
@@ -48,7 +45,7 @@ class StepManager {
 
   static StepManager get instance => _instance!;
 
-  int getSteps() {
+  double getSteps() {
     print(steps);
     return steps;
   }
@@ -69,6 +66,7 @@ class StepManager {
   void onStepCount(StepCount event) {
     laststeps = steps;
     steps += event.steps - laststeps;
+    _notifyListeners();
     
       // _steps = event.steps.toString();
    
@@ -134,7 +132,6 @@ class StepManager {
     this.steps += steps;
     timeStamp = DateTime.now();
     _notifyListeners();
-
   }
 
 

@@ -7,7 +7,7 @@ import "package:flutter/foundation.dart";
 class BankManager {
     double balance = 0;
     int maxBankable = 200;
-    double interestRate = 0.1;
+    double interestRate = 0.0;
     DateTime lastDate = DateTime.now();
 
     StreamController<double> controller = StreamController<double>();
@@ -22,12 +22,14 @@ class BankManager {
 
     factory BankManager() {
       if (_instance == null) {
-          _instance = BankManager._instance;
+          _instance = BankManager._internal();
       }
       return _instance!;
     }
+   static const double microsPerDay = 86400000000; // 24 * 60 * 60 * 1,000,000
 
-    static const secsperyear = 3.154e+7;
+
+    static const secsperyear = 31536000;
 
     void _notifyListeners(){
       controller.add(balance);
@@ -57,12 +59,28 @@ file.writeAsString('$balance');
             }
             balance += amount;
         }
+      _notifyListeners();
+    }
+
+    bool spend(double amount) {
+        if (amount > 0 && balance >= amount) {
+            balance -= amount;
+            _notifyListeners();
+            return true;
+        }
+        return false;
+              
+
     }
 
     void applyInterest(Duration difference) {
         // Duration difference = date.difference(lastDate);
-        int seconds = difference.inSeconds;
-        balance += balance * pow((1+ interestRate/secsperyear),seconds * interestRate);
+        int microseconds = difference.inMicroseconds;
+        double days = microseconds / Duration.microsecondsPerMinute;  
+     
+        balance *= exp(interestRate * days);
+        _notifyListeners();
+
     }
 
 
