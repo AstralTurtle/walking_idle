@@ -7,7 +7,7 @@ import "package:flutter/foundation.dart";
 class BankManager {
     double balance = 0;
     int maxBankable = 200;
-    double interestRate = 0.0;
+    double interestRate = 0.01;
     DateTime lastDate = DateTime.now();
 
     StreamController<double> controller = StreamController<double>();
