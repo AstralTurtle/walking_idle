@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:pedometer/pedometer.dart';
 
-
 class StepManager {
   double steps = 0;
   DateTime timeStamp = DateTime.now();
@@ -12,80 +11,64 @@ class StepManager {
   late Stream<PedestrianStatus> _pedestrianStatusStream;
   String _status = '?';
 
-
   late StreamController<StepManager> controller;
 
   late Stream<StepManager> StepManagerStream;
 
-    
-  
-
-
-
-
-  
-
   static StepManager? _instance;
- 
-  
-  StepManager._internal(){
+
+  StepManager._internal() {
     controller = StreamController<StepManager>();
     init();
-    
   }
 
   factory StepManager() {
     if (_instance == null) {
       _instance = StepManager._internal();
-       
     }
-    
+
     return _instance!;
   }
 
   static StepManager get instance => _instance!;
 
   double getSteps() {
-    print(steps);
+    // print(steps);
     return steps;
   }
 
   void init() {
     initPlatformState();
     print("baller");
-
-
   }
 
   void _notifyListeners() {
     controller.add(this);
   }
 
- 
-
   void onStepCount(StepCount event) {
     laststeps = steps;
+    print(event.steps);
     steps += event.steps - laststeps;
     _notifyListeners();
-    
-      // _steps = event.steps.toString();
-   
+
+    // _steps = event.steps.toString();
   }
 
   void onPedestrianStatusChanged(PedestrianStatus event) {
     print(event);
-      _status = event.status;
+    _status = event.status;
   }
 
   void onPedestrianStatusError(error) {
     print('onPedestrianStatusError: $error');
-      _status = 'Pedestrian Status not available';
+    _status = 'Pedestrian Status not available';
     print(_status);
   }
 
   void onStepCountError(error) {
     print('onStepCountError: $error');
-      // _steps = 'Step Count not available';
+    // _steps = 'Step Count not available';
   }
 
   void initPlatformState() {
@@ -98,23 +81,19 @@ class StepManager {
     _stepCountStream.listen(onStepCount).onError(onStepCountError);
 
     StepManagerStream = makeStepManagerStream().asBroadcastStream();
-
-    
   }
 
-  Stream<StepManager> makeStepManagerStream(){
+  Stream<StepManager> makeStepManagerStream() {
     controller = StreamController<StepManager>();
-    
-    
+
     return controller.stream;
-    
   }
 
-  Stream<StepManager> getStepManagerStream(){
-      return StepManagerStream;
+  Stream<StepManager> getStepManagerStream() {
+    return StepManagerStream;
   }
 
-  void resetSteps(){
+  void resetSteps() {
     steps = 0;
     laststeps = 0;
     _notifyListeners();
@@ -127,12 +106,10 @@ class StepManager {
     _notifyListeners();
   }
 
-  void addSteps(double steps){
+  void addSteps(double steps) {
     laststeps = this.steps;
     this.steps += steps;
     timeStamp = DateTime.now();
     _notifyListeners();
   }
-
-
 }
