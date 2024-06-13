@@ -25,11 +25,10 @@ class _ShopState extends State<Shop> {
         ShopItem(
           title: "Walkers",
           price: walker_price,
-          description: "Increase steps per second by 1.",
+          description: "Walks for you. Increases steps by 1 per second.",
           onPressed: () {
             if (BankManager().spend(walker_price)) {
               IdleManager().stepspersecond += 1;
-              IdleManager().stepspersecond *= var_growth_rate;
               setState(() {
                 walker_price *= var_growth_rate;
               });
@@ -39,10 +38,10 @@ class _ShopState extends State<Shop> {
         ShopItem(
           title: "Refinancing",
           price: refinancing_price,
-          description: "Increase bank interest rate by 0.5%.",
+          description: "Increase bank interest rate by 0.5% (multiplicative).",
           onPressed: () {
             if (BankManager().spend(refinancing_price)) {
-              BankManager().interestRate += 0.005;
+              BankManager().interestRate *= 0.005;
               setState(() {
                 refinancing_price *= var_growth_rate;
               });
@@ -65,7 +64,7 @@ class _ShopState extends State<Shop> {
         ShopItem(
           title: "Favorable Trading",
           price: favorable_trading_price,
-          description: "Increase currency conversion rate.",
+          description: "Increase the currency conversion rate.",
           onPressed: () {
             if (BankManager().spend(favorable_trading_price)) {
               BankManager().conversionRate += 0.2;
@@ -78,7 +77,7 @@ class _ShopState extends State<Shop> {
         ShopItem(
           title: "Wristwatch",
           price: wristwatch_price,
-          description: "Increase maximum hours you can idle.",
+          description: "Increase the maximum hours you can go offline for.",
           onPressed: () {
             if (BankManager().spend(wristwatch_price)) {
               IdleManager().maxHours += 1;

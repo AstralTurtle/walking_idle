@@ -60,10 +60,9 @@ class StepManager {
   }
 
   void onStepCount(int steps) {
-    int steps_multi_applied = steps * getMultiplier();
     laststeps = this.steps;
     // ??
-    double newSteps = this.steps + steps_multi_applied - laststeps;
+    double newSteps = this.steps + steps - laststeps;
     this.steps += newSteps;
 
     multiplier_step_stacks++;

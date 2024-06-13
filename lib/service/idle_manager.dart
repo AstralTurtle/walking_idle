@@ -39,7 +39,7 @@ class IdleManager extends FlameGame {
     // print(diff.inMicroseconds);
     // print(BankManager().balance);
     StepManager().addSteps(
-        stepspersecond * diff.inMicroseconds / Duration.microsecondsPerSecond);
+        (stepspersecond * StepManager().getMultiplier()) * diff.inMicroseconds / Duration.microsecondsPerSecond);
     BankManager().applyInterest(diff);
 
     lasttime = DateTime.now();
