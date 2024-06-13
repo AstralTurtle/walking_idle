@@ -41,7 +41,7 @@ class _ShopState extends State<Shop> {
           description: "Increase bank interest rate by 0.5% (multiplicative).",
           onPressed: () {
             if (BankManager().spend(refinancing_price)) {
-              BankManager().interestRate *= 0.005;
+              BankManager().interestRate *= 1.005;
               setState(() {
                 refinancing_price *= var_growth_rate;
               });
