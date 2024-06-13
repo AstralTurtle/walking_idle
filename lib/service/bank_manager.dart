@@ -6,7 +6,7 @@ import "package:flutter/foundation.dart";
 
 class BankManager {
   double balance = 0;
-  int maxBankable = 200;
+  double maxBankable = 200;
   double interestRate = 0.01;
   double conversionRate = 1;
 
@@ -48,14 +48,19 @@ class BankManager {
     }
   }
 
-  void deposit(double amount) {
-    if (amount > 0) {
-      if (amount > maxBankable) {
-        amount = maxBankable.toDouble();
-      }
-      balance += amount * conversionRate;
+  // returns the amount of STEPS converted/banked
+  double deposit(double steps) {
+    double amount = steps * conversionRate;
+    if (amount + balance > maxBankable)
+    {
+      double steps_banked = (maxBankable - balance)/conversionRate;
+      balance = maxBankable;
+      _notifyListeners();
+      return steps_banked;
     }
+    balance += amount;
     _notifyListeners();
+    return steps;
   }
 
   bool spend(double amount) {
@@ -68,6 +73,11 @@ class BankManager {
   }
 
   void applyInterest(Duration difference) {
+    if (balance >= maxBankable)
+    {
+      balance = maxBankable;
+      return;
+    }
     // Duration difference = date.difference(lastDate);
     int microseconds = difference.inMicroseconds;
     double days = microseconds / Duration.microsecondsPerMinute;

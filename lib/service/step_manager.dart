@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:pedometer/pedometer.dart';
 
 class StepManager {
@@ -12,10 +11,16 @@ class StepManager {
   String _status = '?';
 
   late StreamController<StepManager> controller;
-
   late Stream<StepManager> StepManagerStream;
 
   static StepManager? _instance;
+
+  final double max_multiplier = 20;
+  final int steps_to_increase_multiplier = 2;
+  int multiplier_step_stacks = 0;
+  // seconds
+  int time_for_multiplier_expire = 1;
+  Timer? multiplierTimer;
 
   StepManager._internal() {
     controller = StreamController<StepManager>();
@@ -33,59 +38,78 @@ class StepManager {
   static StepManager get instance => _instance!;
 
   double getSteps() {
-    // print(steps);
     return steps;
+  }
+
+  int getMultiplier() {
+    return (multiplier_step_stacks / steps_to_increase_multiplier).truncate();
   }
 
   void init() {
     initPlatformState();
-    print("baller");
+    multiplier_step_stacks = steps_to_increase_multiplier;
+  }
+
+  void reset_multiplier_stacks()
+  {
+    multiplier_step_stacks = steps_to_increase_multiplier;
   }
 
   void _notifyListeners() {
     controller.add(this);
   }
 
-  void onStepCount(StepCount event) {
-    laststeps = steps;
-    print(event.steps);
-    steps += event.steps - laststeps;
-    _notifyListeners();
+  void onStepCount(int steps) {
+    int steps_multi_applied = steps * getMultiplier();
+    laststeps = this.steps;
+    // ??
+    double newSteps = this.steps + steps_multi_applied - laststeps;
+    this.steps += newSteps;
 
-    // _steps = event.steps.toString();
+    multiplier_step_stacks++;
+    restartMultiplierResetTimer();
+
+    print("new multiplier: ${getMultiplier().toStringAsFixed(2)}");
+
+    _notifyListeners();
+  }
+
+  void restartMultiplierResetTimer() {
+    multiplierTimer?.cancel();
+    multiplierTimer = Timer(Duration(seconds: time_for_multiplier_expire), () {
+      // reset that shit
+      reset_multiplier_stacks();
+      _notifyListeners();
+    });
   }
 
   void onPedestrianStatusChanged(PedestrianStatus event) {
-    print(event);
     _status = event.status;
   }
 
   void onPedestrianStatusError(error) {
-    print('onPedestrianStatusError: $error');
     _status = 'Pedestrian Status not available';
-    print(_status);
   }
 
   void onStepCountError(error) {
-    print('onStepCountError: $error');
-    // _steps = 'Step Count not available';
+    // Handle error
   }
 
   void initPlatformState() {
     _pedestrianStatusStream = Pedometer.pedestrianStatusStream;
-    _pedestrianStatusStream
-        .listen(onPedestrianStatusChanged)
-        .onError(onPedestrianStatusError);
+    _pedestrianStatusStream.listen(onPedestrianStatusChanged).onError(onPedestrianStatusError);
 
     _stepCountStream = Pedometer.stepCountStream;
-    _stepCountStream.listen(onStepCount).onError(onStepCountError);
+    void callback_func(StepCount event) {
+      onStepCount(event.steps);
+    };
+    _stepCountStream.listen(callback_func).onError(onStepCountError);
 
     StepManagerStream = makeStepManagerStream().asBroadcastStream();
   }
 
   Stream<StepManager> makeStepManagerStream() {
     controller = StreamController<StepManager>();
-
     return controller.stream;
   }
 
@@ -96,19 +120,20 @@ class StepManager {
   void resetSteps() {
     steps = 0;
     laststeps = 0;
+    reset_multiplier_stacks();
     _notifyListeners();
   }
 
-  void addDummySteps() {
+  void addDummyHumanStep() {
     laststeps = steps;
-    steps += 100;
+    onStepCount(1);
     timeStamp = DateTime.now();
     _notifyListeners();
   }
 
   void addSteps(double steps) {
     laststeps = this.steps;
-    this.steps += steps;
+    this.steps += steps * getMultiplier();
     timeStamp = DateTime.now();
     _notifyListeners();
   }

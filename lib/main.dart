@@ -1,39 +1,97 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
-import 'dart:async';
-
 import 'package:pedometer/pedometer.dart';
+import 'package:persistent_bottom_nav_bar/persistent_tab_view.dart';
 import 'package:walking_idle/service/bank_manager.dart';
 import 'package:walking_idle/service/idle_manager.dart';
-
 import 'package:walking_idle/service/step_manager.dart';
-
 import 'package:walking_idle/shop.dart';
 
-String formatDate(DateTime d) {
-  return d.toString().substring(0, 19);
-}
-
 void main() {
-  runApp(why());
+  runApp(
+    MyApp(),
+  );
 }
 
-class why extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: ball(),
+      home: MainScreen(),
     );
   }
 }
 
-// test classes please remake
-class ball extends StatefulWidget {
+class MainScreen extends StatefulWidget {
   @override
-  State<ball> createState() => _ballState();
+  _MainScreenState createState() => _MainScreenState();
 }
 
-class _ballState extends State<ball> {
+class _MainScreenState extends State<MainScreen> {
+  final PersistentTabController _controller = PersistentTabController(initialIndex: 0);
+
+  List<Widget> _buildScreens() {
+    return [
+      HomePage(),
+      ShopPage(),
+    ];
+  }
+
+  List<PersistentBottomNavBarItem> _navBarsItems() {
+    return [
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.home),
+        title: ("Home"),
+        activeColorPrimary: Colors.blue,
+        inactiveColorPrimary: Colors.grey,
+      ),
+      PersistentBottomNavBarItem(
+        icon: Icon(Icons.shopping_cart),
+        title: ("Shop"),
+        activeColorPrimary: Colors.blue,
+        inactiveColorPrimary: Colors.grey,
+      ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return PersistentTabView(
+      context,
+      controller: _controller,
+      screens: _buildScreens(),
+      items: _navBarsItems(),
+      confineInSafeArea: true,
+      backgroundColor: Colors.white,
+      handleAndroidBackButtonPress: true,
+      resizeToAvoidBottomInset: true,
+      stateManagement: true,
+      hideNavigationBarWhenKeyboardShows: true,
+      decoration: NavBarDecoration(
+        borderRadius: BorderRadius.circular(10.0),
+        colorBehindNavBar: Colors.white,
+      ),
+      popAllScreensOnTapOfSelectedTab: true,
+      itemAnimationProperties: ItemAnimationProperties(
+        duration: Duration(milliseconds: 200),
+        curve: Curves.ease,
+      ),
+      screenTransitionAnimation: ScreenTransitionAnimation(
+        animateTabTransition: true,
+        curve: Curves.ease,
+        duration: Duration(milliseconds: 200),
+      ),
+      navBarStyle: NavBarStyle.style6,
+    );
+  }
+}
+
+class HomePage extends StatefulWidget {
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
   final game = IdleManager();
   late Stream<StepManager> stream;
   double steps = 0;
@@ -42,103 +100,136 @@ class _ballState extends State<ball> {
   @override
   void initState() {
     stream = StepManager().getStepManagerStream();
-
-    // TODO: implement initState
     super.initState();
-  }
-
-  void testSubscription(StepManager events) {
-    print("ping");
-    print(events);
-    setState(() {
-      print("ponged");
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    print("pong");
-    print("ponged +" + StepManager().getSteps().toString());
     return Scaffold(
-        appBar: AppBar(
-          title: Text("Walking Idle Game"),
-        ),
-        body: Center(
-          child: Column(
-            children: [
-              StreamBuilder(
-                  stream: StepManager().getStepManagerStream(),
-                  builder: (context, snapshot) {
-                    if (snapshot.data == null) {
-                      return Text("0");
-                    }
-                    steps = snapshot.data!.getSteps() ?? 0;
-                    return Text(steps.toString());
-                  }),
-              TextButton(
+      appBar: AppBar(
+        title: Text("Walking Idle Game"),
+      ),
+      body: Center(
+        child: Column(
+          children: [
+            StreamBuilder(
+              stream: StepManager().getStepManagerStream(),
+              builder: (context, snapshot) {
+                if (snapshot.data == null) {
+                  steps = 0;
+                } else {
+                  steps = snapshot.data!.getSteps();
+                }
+                return Column(
+                  children: [
+                    Text(
+                      "${steps.toStringAsFixed(0)} steps",
+                      style: TextStyle(
+                        fontSize: 40,
+                      ),
+                    ),
+                    Text(
+                      "${StepManager().getMultiplier()}x multiplier",
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.grey
+                      ),
+                    )
+                  ],
+                );
+              },
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: ElevatedButton(
                   onPressed: () {
-                    BankManager().deposit(steps);
-                    StepManager().resetSteps();
+                    double amount_banked = BankManager().deposit(steps);
+                    StepManager().steps -= amount_banked;
                   },
-                  child: const Text("Bank")),
-              StreamBuilder(
-                  stream: BankManager().controller.stream,
-                  builder: (context, snapshot) {
-                    balance = snapshot.data ?? 0;
-                    return Text(balance.toString());
-                  }),
-              SingleChildScrollView(
-                  child: Center(
-                      child: Column(
-                children: [
-                  TextButton(
-                      onPressed: () {
-                        if (BankManager().spend(100))
-                          IdleManager().stepspersecond += 1;
-                      },
-                      child: const Text("Walkers | 100 points ")),
-                  TextButton(
-                      onPressed: () {
-                        if (BankManager().spend(10))
-                          BankManager().interestRate += 0.005;
-                      },
-                      child: Text("Refinancing | 10 points ")),
-                  TextButton(
-                      onPressed: () {
-                        if (BankManager().spend(150))
-                          BankManager().maxBankable *= 2;
-                      },
-                      child: Text("Credit Report | 150 points ")),
-                  TextButton(
-                      onPressed: () {
-                        if (BankManager().spend(200))
-                          BankManager().conversionRate += 0.2;
-                      },
-                      child: Text("Favorable Trading | 200 points ")),
-                  TextButton(
-                      onPressed: () {
-                        if (BankManager().spend(200))
-                          IdleManager().maxHours += 1;
-                      },
-                      child: Text("Wristwatch | 200 points "))
-                ],
-              ))),
-
-              SizedBox(
-                height: 1,
-                width: 1,
-                child: GameWidget(game: game),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 20),  
+                    textStyle: TextStyle(fontSize: 24),  
+                  ),
+                  child: const Text("Cash in"),
+                ),
               ),
-
-              // Text(StepManager.instance._status),
-            ],
-          ),
+            ),
+            SizedBox(
+              height: 1,
+              width: 1,
+              child: GameWidget(
+                game: game,
+              ),
+            ),
+          ],
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            StepManager().addDummySteps();
-            // print(StepManager().getSteps());
-          },
-        ));
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          StepManager().addDummyHumanStep();
+        },
+      ),
+    );
+  }
+}
+
+class ShopPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Shop"),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder(
+              stream: BankManager().controller.stream,
+              builder: (context, snapshot) {
+                double balance = snapshot.data ?? 0;
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Bank balance:"
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            "${balance.toStringAsFixed(2)}",
+                            style: TextStyle(
+                              fontSize: 40,
+                            ),
+                          ),
+                          Text(
+                            "/${BankManager().maxBankable.toStringAsFixed(2)}", // Display max bank balance here
+                            style: TextStyle(
+                              fontSize: 24,
+                              color: const Color.fromARGB(255, 81, 79, 79),
+                            ),
+                          ),
+                          Text(
+                            " AUC",
+                            style: TextStyle(
+                              fontSize: 40,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                );
+              },
+            ),
+          ),
+          Shop()
+        ],
+      ),
+    );
   }
 }
