@@ -129,7 +129,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     Text(
-                      "${StepManager().getMultiplier()}x multiplier",
+                      "${StepManager().getMultiplier()}x walker boost",
                       style: TextStyle(
                         fontSize: 20,
                         color: Colors.grey

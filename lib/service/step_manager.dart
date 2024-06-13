@@ -15,7 +15,7 @@ class StepManager {
 
   static StepManager? _instance;
 
-  final double max_multiplier = 20;
+  final int max_multiplier = 20;
   final int steps_to_increase_multiplier = 2;
   int multiplier_step_stacks = 0;
   // seconds
@@ -42,7 +42,8 @@ class StepManager {
   }
 
   int getMultiplier() {
-    return (multiplier_step_stacks / steps_to_increase_multiplier).truncate();
+    int multiplier = (multiplier_step_stacks / steps_to_increase_multiplier).truncate();
+    return multiplier <= max_multiplier ? multiplier : max_multiplier;
   }
 
   void init() {
